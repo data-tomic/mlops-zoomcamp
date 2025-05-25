@@ -91,6 +91,8 @@ How many files were saved to `OUTPUT_FOLDER`?
 
 ---
 
+---
+
 ## Q3. Train a model with autolog
 
 **Task:**
@@ -108,54 +110,44 @@ Modify the `train.py` script to enable MLflow autologging. What is the value of 
 import os
 import pickle
 import click
-import mlflow # Added
-import mlflow.sklearn # Added for sklearn autologging
+import mlflow
+import mlflow.sklearn
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
-# mlflow.set_tracking_uri("http://127.0.0.1:5000") # Uncomment if server is not running on default
 
 def load_pickle(filename: str):
     with open(filename, "rb") as f_in:
         return pickle.load(f_in)
 
+
 @click.command()
 @click.option(
     "--data_path",
-    default="./output", # Ensure this path points to where Q2 saved files
+    default="./output",
     help="Location where the processed NYC taxi trip data was saved"
 )
 def run_train(data_path: str):
 
-    mlflow.sklearn.autolog() # Enabled autologging for scikit-learn
+    mlflow.sklearn.autolog()
 
-    with mlflow.start_run(): # Wrapper for run tracking
+    with mlflow.start_run():
+        mlflow.set_tag("developer", "Ded Moroz")
+        mlflow.set_tag("model_type", "RandomForestRegressor")
+
         X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))
         X_val, y_val = load_pickle(os.path.join(data_path, "val.pkl"))
-
-        # Logging dataset info (optional, but useful)
-        mlflow.set_tag("training_data_path", os.path.join(data_path, "train.pkl"))
-        mlflow.set_tag("validation_data_path", os.path.join(data_path, "val.pkl"))
 
         rf = RandomForestRegressor(max_depth=10, random_state=0)
         rf.fit(X_train, y_train)
         y_pred = rf.predict(X_val)
 
-        rmse = mean_squared_error(y_pred, y_val, squared=False)
-        # mlflow.log_metric("rmse", rmse) # Will be logged automatically
+        rmse = mean_squared_error(y_val, y_pred, squared=False)
         print(f"RMSE: {rmse}")
 
 if __name__ == '__main__':
     run_train()
-```
-
-**Actions:**
-1.  Modified `train.py` as shown above.
-2.  Ran the script from the `02-experiment-tracking/homework/` directory (assuming `output` is a subdirectory or `data_path` is correctly set):
-    `python train.py --data_path ./output`
-3.  Started MLflow UI: `mlflow ui`
-4.  In the MLflow UI, in the latest run, under the "Parameters" section, the `min_samples_split` parameter had a value of `2`. This is the default value for `RandomForestRegressor` as we did not change it.
 
 ---
 
