@@ -1,0 +1,15 @@
+artifact_uri: ./mlruns/0/40a822f4a2cd47ffbcfab5c07e4d8a27/artifacts
+end_time: 1748196074374
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 40a822f4a2cd47ffbcfab5c07e4d8a27
+run_name: likeable-hawk-717
+run_uuid: 40a822f4a2cd47ffbcfab5c07e4d8a27
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1748196060793
+status: 3
+tags: []
+user_id: codespace
