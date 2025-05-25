@@ -199,78 +199,90 @@ Modify the `hpo.py` script to log validation RMSE and parameters to MLflow. Do n
 *   6.336
 
 **Answer:**
-`5.335` *(Replace with your actual value! Example: 5.3352...)*
+`5.335`
 
 **Changes in `hpo.py`:**
-In the `objective` function:
 ```python
-# ... (other imports)
+import os
+import pickle
+import click
 import mlflow
-from hyperopt import STATUS_OK # Trials, fmin, hp, tpe are already imported
-from sklearn.ensemble import RandomForestRegressor # Ensure this is imported
-from sklearn.metrics import mean_squared_error # Ensure this is imported
+import numpy as np
+from hyperopt import STATUS_OK, Trials, fmin, hp, tpe
+from hyperopt.pyll import scope
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
 
-# ... (Assume X_train, y_train, X_val, y_val are loaded globally or passed to objective)
+# Ensured MLFLOW_TRACKING_URI points to the server from Q4 (e.g., http://127.0.0.1:5000)
+MLFLOW_TRACKING_URI = "http://127.0.0.1:5000" # Or your actual server URI
+EXPERIMENT_NAME = "random-forest-hyperopt"
 
-def objective(params):
-    # Inside with mlflow.start_run(), it automatically uses the active experiment
-    # set via mlflow.set_experiment() before calling fmin
-    with mlflow.start_run():
-        # Log parameters passed to objective
-        # Convert int-values from params to int, as hyperopt might pass them as float
-        params_to_log = {
-            'max_depth': int(params['max_depth']),
-            'n_estimators': int(params['n_estimators']),
-            'min_samples_split': int(params['min_samples_split']),
-            'min_samples_leaf': int(params['min_samples_leaf']),
-            'random_state': int(params['random_state']) # random_state from search_space
-        }
-        mlflow.log_params(params_to_log)
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_experiment(EXPERIMENT_NAME)
 
-        rf = RandomForestRegressor(**params_to_log) # Use converted parameters
-        rf.fit(X_train, y_train) # Make sure X_train, y_train are accessible
-        y_pred = rf.predict(X_val) # Make sure X_val is accessible
-        rmse = mean_squared_error(y_val, y_pred, squared=False) # Make sure y_val is accessible
 
-        mlflow.log_metric("rmse", rmse)
-        # mlflow.sklearn.log_model(rf, "model") # Can log model, but not required for the question
+def load_pickle(filename: str):
+    with open(filename, "rb") as f_in:
+        return pickle.load(f_in)
 
-    return {'loss': rmse, 'status': STATUS_OK}
 
-# ... (in the main part of the script before calling fmin)
-# Ensure MLFLOW_TRACKING_URI is set or defined in code:
-# mlflow.set_tracking_uri("http://127.0.0.1:5001") # Point to our running server (Q4)
-# mlflow.set_experiment("random-forest-hyperopt")
-#
-# (Load X_train, y_train, X_val, y_val from ./output using load_pickle)
-#
-# search_space = {
-#    'max_depth': scope.int(hp.quniform('max_depth', 1, 20, 1)),
-#    'n_estimators': scope.int(hp.quniform('n_estimators', 10, 50, 1)),
-#    'min_samples_split': scope.int(hp.quniform('min_samples_split', 2, 10, 1)),
-#    'min_samples_leaf': scope.int(hp.quniform('min_samples_leaf', 1, 4, 1)),
-#    'random_state': 42 # Fix random_state for RandomForestRegressor reproducibility
-# }
-#
-# rstate = np.random.default_rng(42)  # for reproducible results
-# fmin(
-#     fn=objective,
-#     space=search_space,
-#     algo=tpe.suggest,
-#     max_evals=10, # Or as specified/desired
-#     trials=Trials(),
-#     rstate=rstate
-# )
-# ...
+@click.command()
+@click.option(
+    "--data_path",
+    default="./output",
+    help="Location where the processed NYC taxi trip data was saved"
+)
+@click.option(
+    "--num_trials",
+    default=15,
+    type=int,
+    help="The number of parameter evaluations for the optimizer to explore"
+)
+def run_optimization(data_path: str, num_trials: int):
+
+    X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))
+    X_val, y_val = load_pickle(os.path.join(data_path, "val.pkl"))
+
+    def objective(params):
+        with mlflow.start_run():
+            mlflow.set_tag("optimizer", "hyperopt")
+            # Parameters are already int due to scope.int in search_space
+            mlflow.log_params(params) 
+
+            rf = RandomForestRegressor(**params)
+            rf.fit(X_train, y_train)
+            y_pred = rf.predict(X_val)
+            rmse = mean_squared_error(y_val, y_pred, squared=False)
+
+            mlflow.log_metric("rmse", rmse)
+
+        return {'loss': rmse, 'status': STATUS_OK}
+
+    search_space = {
+        'max_depth': scope.int(hp.quniform('max_depth', 1, 20, 1)),
+        'n_estimators': scope.int(hp.quniform('n_estimators', 10, 50, 1)),
+        'min_samples_split': scope.int(hp.quniform('min_samples_split', 2, 10, 1)),
+        'min_samples_leaf': scope.int(hp.quniform('min_samples_leaf', 1, 4, 1)),
+        'random_state': 42
+    }
+
+    rstate = np.random.default_rng(42)
+    fmin(
+        fn=objective,
+        space=search_space,
+        algo=tpe.suggest,
+        max_evals=num_trials,
+        trials=Trials(),
+        rstate=rstate
+    )
+
+
+if __name__ == '__main__':
+    run_optimization()
 ```
+MLflow UI Screenshot for Q5:
+![alt text](q5_mlflow_ui_rmse.png)
 
-**Actions:**
-1.  Ensured the MLflow server (from Q4) was running.
-2.  Set `MLFLOW_TRACKING_URI="http://127.0.0.1:5001"` (or whichever port you used for the server in Q4) either as an environment variable or in the script.
-3.  In `hpo.py` (located in `02-experiment-tracking/homework/`), added `mlflow.set_tracking_uri(...)` and `mlflow.set_experiment("random-forest-hyperopt")`.
-4.  Modified the `objective` function to log parameters and the `rmse` metric. Ensured `X_train, y_train, X_val, y_val` are loaded from `./output` (where Q2 saved files) and are accessible to `objective`.
-5.  Ran `python hpo.py` from the `02-experiment-tracking/homework/` directory.
-6.  In the MLflow UI (at `http://127.0.0.1:5001`) in the `random-forest-hyperopt` experiment, sorted runs by `rmse`. The lowest RMSE value was noted. Example: `5.335203406225289`. The closest option is `5.335`.
 
 ---
 
