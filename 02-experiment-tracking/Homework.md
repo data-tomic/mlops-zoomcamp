@@ -152,7 +152,8 @@ if __name__ == '__main__':
 ## Q4. Launch the tracking server locally
 
 **Task:**
-Launch a tracking server with a SQLite backend and an `artifacts` folder for the artifact store. In addition to `backend-store-uri`, what else do you need to pass?
+Launch a tracking server on your local machine, select a SQLite db for the backend store and a folder called `artifacts` for the artifacts store.
+In addition to `backend-store-uri`, what else do you need to pass to properly configure the server?
 *   `default-artifact-root`
 *   `serve-artifacts`
 *   `artifacts-only`
@@ -161,12 +162,30 @@ Launch a tracking server with a SQLite backend and an `artifacts` folder for the
 **Answer:**
 `default-artifact-root`
 
-**Command to launch the server:**
-```bash
-mkdir mlflow_artifacts_store # Create directory for artifacts
-mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlflow_artifacts_store -p 5001 # Using port 5001 to avoid conflict if mlflow ui is already on 5000
-```
-*Note: I specified port 5001 in case port 5000 was occupied. If it's free, `-p 5001` can be omitted. This server should be kept running for Q5 and Q6.*
+**Actions:**
+1.  Stopped any previous `mlflow ui` instances.
+2.  Created a directory for artifacts. I named it `artifacts_q4` to distinguish it, but the homework refers to `artifacts`.
+    ```bash
+    # In /workspaces/mlops-zoomcamp/02-experiment-tracking
+    mkdir artifacts_q4 
+    ```
+3.  Launched the MLflow tracking server with SQLite as backend and the created folder as the artifact root. I used port 5001 for this example:
+    ```bash
+    mlflow server \
+        --backend-store-uri sqlite:///mlflow.db \
+        --default-artifact-root ./artifacts_q4 \
+        --port 5001
+    ```
+    If using the default port 5000 and an artifact folder named `artifacts`:
+    ```bash
+    # mlflow server \
+    #     --backend-store-uri sqlite:///mlflow.db \
+    #     --default-artifact-root ./artifacts 
+    ```
+4.  The server started successfully, listening on `http://127.0.0.1:5001`.
+5.  This server will be kept running for Q5 and Q6.
+6.  The parameter `default-artifact-root` is used to specify the location for storing artifacts (like models, plots, etc.).
+
 
 ---
 
