@@ -296,128 +296,35 @@ Update the `register_model.py` script to select the model with the lowest RMSE o
 *   6.568
 
 **Answer:**
-`5.567` *(Replace with your actual value! Example: 5.5674...)*
+`5.567`
 
-**Key changes in `register_model.py`:**
-```python
-import os
-import pickle
-import click
-import mlflow
-from mlflow.entities import ViewType
-from mlflow.tracking import MlflowClient
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error
-
-# Constants (examples, adapt to your script)
-HPO_EXPERIMENT_NAME = "random-forest-hyperopt"
-EXPERIMENT_NAME = "random-forest-best-models"
-# Ensure RF_PARAMS matches the parameters used in your HPO search space
-RF_PARAMS = ['max_depth', 'n_estimators', 'min_samples_split', 'min_samples_leaf', 'random_state']
-MODEL_REGISTRY_NAME = "GreenTaxiDurationPredictor" # Name for the registered model
-
-# Set tracking URI (if not set via env var)
-TRACKING_SERVER_HOST = "http://127.0.0.1:5001" # Specify your server from Q4
-mlflow.set_tracking_uri(TRACKING_SERVER_HOST)
-
-client = MlflowClient(tracking_uri=TRACKING_SERVER_HOST)
-
-def load_pickle(filename: str):
-    with open(filename, "rb") as f_in:
-        return pickle.load(f_in)
-
-@click.command()
-@click.option(
-    "--data_path",
-    default="./output", # Path to processed data from Q2
-    help="Location where the processed NYC taxi trip data was saved."
-)
-@click.option(
-    "--top_n",
-    default=5,
-    type=int,
-    help="Number of top models to evaluate from HPO experiment."
-)
-def run_register_model(data_path: str, top_n: int):
-    # 1. Get HPO experiment
-    experiment_hpo = client.get_experiment_by_name(HPO_EXPERIMENT_NAME)
-    if not experiment_hpo:
-        print(f"Experiment {HPO_EXPERIMENT_NAME} not found.")
-        return
-
-    # 2. Search for top_n runs in HPO experiment
-    runs = client.search_runs(
-        experiment_ids=experiment_hpo.experiment_id,
-        filter_string="metrics.rmse < 7", # Optional: filter out very bad runs
-        run_view_type=ViewType.ACTIVE_ONLY,
-        max_results=top_n,
-        order_by=["metrics.rmse ASC"]
-    )
-
-    # Load train and test datasets
-    X_train, y_train = load_pickle(os.path.join(data_path, "train.pkl"))
-    X_test, y_test = load_pickle(os.path.join(data_path, "test.pkl"))
-
-    best_test_rmse = float('inf')
-    best_run_id_for_registry = None
-
-    # Create/get experiment for best models
-    mlflow.set_experiment(EXPERIMENT_NAME) # Sets active experiment for new runs
-
-    # 3. Iterate over top HPO runs
-    for run in runs:
-        hpo_run_id = run.info.run_id
-        # Ensure params are correctly retrieved and cast to int
-        hpo_params = {param: int(float(run.data.params[param])) for param in RF_PARAMS if param in run.data.params}
-        
-        # Create a new run in the "random-forest-best-models" experiment
-        with mlflow.start_run(run_name=f"test_hpo_{hpo_run_id}", nested=True) as child_run:
-            mlflow.set_tag("source_hpo_run_id", hpo_run_id)
-            mlflow.log_params(hpo_params)
-            
-            # Retrain the model with HPO parameters on the full training set
-            # (as hpo.py only trained on a subset or didn't log the model artifact)
-            rf = RandomForestRegressor(**hpo_params)
-            rf.fit(X_train, y_train)
-            mlflow.sklearn.log_model(rf, "model") # Log this specific model
-            
-            y_pred_test = rf.predict(X_test)
-            test_rmse = mean_squared_error(y_test, y_pred_test, squared=False)
-            mlflow.log_metric("test_rmse", test_rmse)
-            print(f"Child Run {child_run.info.run_id}: Test RMSE = {test_rmse} for HPO run {hpo_run_id}")
-
-            if test_rmse < best_test_rmse:
-                best_test_rmse = test_rmse
-                best_run_id_for_registry = child_run.info.run_id # ID of this child run
-
-    # 4. Register the best model from the "random-forest-best-models" experiment
-    if best_run_id_for_registry:
-        model_uri = f"runs:/{best_run_id_for_registry}/model" # Path to model in the child run
-        mlflow.register_model(
-            model_uri=model_uri,
-            name=MODEL_REGISTRY_NAME
-        )
-        print(f"Registered model '{MODEL_REGISTRY_NAME}' from run_id '{best_run_id_for_registry}' with Test RMSE: {best_test_rmse}")
-    else:
-        print("No models were evaluated to register.")
-
-if __name__ == '__main__':
-    run_register_model()
-```
+**Changes in `register_model.py` (summary of key logic):**
+The script was updated to:
+1.  Connect to the MLflow tracking server (e.g., `http://127.0.0.1:5000`).
+2.  Fetch the top 5 runs from the `random-forest-hyperopt` experiment based on validation RMSE.
+3.  For each of these HPO runs:
+    a.  Start a new MLflow run within the `random-forest-best-models` experiment.
+    b.  Log the HPO parameters.
+    c.  Train a `RandomForestRegressor` model using these parameters on the training data (`train.pkl`).
+    d.  Evaluate the model on the test data (`test.pkl`) to get `test_rmse`.
+    e.  Log the `test_rmse` and the trained model (`mlflow.sklearn.log_model(rf, "model")`) to the new run.
+    f.  Keep track of the `run_id` and `test_rmse` for this new run.
+4.  After evaluating all top 5 HPO configurations, identify the run from `random-forest-best-models` that achieved the lowest `test_rmse`.
+5.  Register the model from this best run to the MLflow Model Registry using `mlflow.register_model()` with `model_uri="runs:/<BEST_RUN_ID>/model"` and a chosen model name (e.g., "GreenTaxiBestRF").
 
 **Actions:**
-1.  Ensured the MLflow server (from Q4) was running, and `MLFLOW_TRACKING_URI` was set to `http://127.0.0.1:5001` (or your server's port) either as an environment variable or in the script.
-2.  Updated the `register_model.py` script (in `02-experiment-tracking/homework/`) as described above. Key points:
-    *   Load `X_train, y_train` to retrain models with HPO parameters (since Q5's `hpo.py` might not have logged model artifacts or only trained on validation data for speed).
-    *   Create a new run in the `random-forest-best-models` experiment for each of the top HPO configurations.
-    *   In this new run, log parameters, retrain and log the model, and log `test_rmse` using `X_test, y_test` from `./output`.
-    *   Find the `run_id` of the *new child run* (from `random-forest-best-models`) that yielded the lowest `test_rmse`.
-    *   Register the model from this *new child run* using its `model_uri`.
-3.  Ran `python register_model.py --data_path ./output` from the `02-experiment-tracking/homework/` directory.
-4.  Checked the MLflow UI:
-    *   New runs appeared in the `random-forest-best-models` experiment.
-    *   The run with the lowest `test_rmse` was noted. Example value: `5.567494543203468`. The closest option is `5.567`.
-    *   In the "Models" section of MLflow UI, a model with the name `GreenTaxiDurationPredictor` (or your chosen name) appeared.
+1.  Ensured the MLflow server (from Q4, running on `http://127.0.0.1:5000`) was active.
+2.  Modified and executed the `register_model.py` script.
+3.  The script processed 5 models. The best `test_rmse` obtained was `5.567408012462019`.
+    Relevant console output:
+    ```
+    Best model for registration is from run_id: 4430b1fca2c24518953a5674f0b10b1b with Test RMSE: 5.567408012462019
+    ...
+    Model 'GreenTaxiBestRF' version 1 registered successfully.
+    ```
+4.  The model corresponding to this lowest test RMSE was successfully registered in the MLflow Model Registry under the name "GreenTaxiBestRF".
+5.  The closest answer option to `5.567408...` is `5.567`.
+
 
 ---
 
