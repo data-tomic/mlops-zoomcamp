@@ -91,8 +91,6 @@ How many files were saved to `OUTPUT_FOLDER`?
 
 ---
 
----
-
 ## Q3. Train a model with autolog
 
 **Task:**
@@ -148,7 +146,7 @@ def run_train(data_path: str):
 
 if __name__ == '__main__':
     run_train()
-
+```
 ---
 
 ## Q4. Launch the tracking server locally
