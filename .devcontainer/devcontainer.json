@@ -1,0 +1,25 @@
+// .devcontainer/devcontainer.json
+{
+	"name": "MLOps Zoomcamp - Orchestration",
+	"image": "mcr.microsoft.com/devcontainers/python:0-3.10",
+
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+	},
+
+	// ВАЖНО: Эта команда выполнится после создания контейнера.
+	// Она перейдет в папку 03-orchestration, запустит MLflow и установит зависимости.
+	"postCreateCommand": "cd 03-orchestration && docker-compose up -d && pip install -r requirements.txt",
+
+	"forwardPorts": [ 5000, 4200 ],
+
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"prefect.prefect-vscode"
+			]
+		}
+	}
+}

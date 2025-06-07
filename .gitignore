@@ -172,3 +172,13 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info
+
+# MLflow data
+mlflow_data/
