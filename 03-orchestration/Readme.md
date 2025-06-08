@@ -1,9 +1,3 @@
-Of course. Here is a comprehensive `README.md` file written in English. It covers the project's goal, the rationale for choosing Prefect over its competitors, and a complete step-by-step guide for setting up and running the project in GitHub Codespaces.
-
-You can copy and paste the content below directly into your `README.md` file.
-
----
-
 # MLOps Orchestration: From Script to Production Pipeline
 
 This project demonstrates the process of converting a standalone machine learning model training script into a robust, automated, and observable MLOps pipeline using modern orchestration and experiment tracking tools.

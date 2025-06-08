@@ -2,11 +2,15 @@
 # coding: utf-8
 
 import pickle
-import argparse  # <-- 1. Импортируем argparse
+import argparse
 from pathlib import Path
 
 import pandas as pd
 import xgboost as xgb
+
+# --- 1. NEW IMPORT ---
+from sklearn.linear_model import LinearRegression
+# ---------------------
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.metrics import root_mean_squared_error
@@ -17,67 +21,68 @@ from prefect import task, flow
 
 @task
 def read_dataframe(year: int, month: int) -> pd.DataFrame:
-    """Читает данные за определенный год и месяц, выполняет базовую предобработку."""
-    url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_{year}-{month:02d}.parquet'
+    """Reads data for YELLOW taxi and performs basic preprocessing."""
+    url = f'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year}-{month:02d}.parquet'
     df = pd.read_parquet(url)
 
-    df['duration'] = df.lpep_dropoff_datetime - df.lpep_pickup_datetime
+    print(f"Loaded {len(df)} records from the file.")
+
+    df['duration'] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
     df.duration = df.duration.apply(lambda td: td.total_seconds() / 60)
     df = df[(df.duration >= 1) & (df.duration <= 60)]
 
     categorical = ['PULocationID', 'DOLocationID']
     df[categorical] = df[categorical].astype(str)
+    
     return df
 
 
 @task
 def create_X(df: pd.DataFrame, dv: DictVectorizer = None) -> tuple:
-    """Создает матрицу признаков X и возвращает ее вместе с векторизатором."""
-    df['PU_DO'] = df['PULocationID'] + '_' + df['DOLocationID']
-    categorical = ['PU_DO']
-    numerical = ['trip_distance']
-    dicts = df[categorical + numerical].to_dict(orient='records')
+    """Creates the feature matrix X using separate pickup and dropoff locations."""
+    # --- 2. MODIFIED: Use separate features ---
+    categorical = ['PULocationID', 'DOLocationID']
+    # No numerical features for this specific task
+    # ----------------------------------------
+    
+    dicts = df[categorical].to_dict(orient='records')
 
     if dv is None:
         dv = DictVectorizer()
         X = dv.fit_transform(dicts)
     else:
         X = dv.transform(dicts)
+        
     return X, dv
 
 
+# --- 3. NEW TASK: For training Linear Regression ---
 @task
-def train_model_and_log_results(X_train, y_train, X_val, y_val, dv: DictVectorizer):
-    """Обучает модель XGBoost, логирует все в MLflow."""
-    mlflow.set_tracking_uri("http://localhost:5000") # <-- Исправлено на localhost
-    mlflow.set_experiment("nyc-taxi-experiment-homework")
+def train_linear_regression_model(X_train, y_train, X_val, y_val, dv: DictVectorizer):
+    """Trains a Linear Regression model and logs results to MLflow."""
+    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_experiment("nyc-taxi-homework-linear-regression")
 
     with mlflow.start_run():
-        train = xgb.DMatrix(X_train, label=y_train)
-        valid = xgb.DMatrix(X_val, label=y_val)
+        # Instantiate and train the model
+        lr = LinearRegression()
+        lr.fit(X_train, y_train)
 
-        num_features = X_train.shape[1]
-        print(f"Number of features: {num_features}")
-        mlflow.log_param("num_features", num_features)
+        # --- THIS IS THE ANSWER TO THE QUESTION ---
+        intercept = lr.intercept_
+        print(f"Intercept of the trained model: {intercept}")
+        # ----------------------------------------
 
-        best_params = {
-            'learning_rate': 0.09585355369315604, 'max_depth': 30,
-            'min_child_weight': 1.060597050922164, 'objective': 'reg:linear',
-            'reg_alpha': 0.018060244040060163, 'reg_lambda': 0.011658731377413597,
-            'seed': 42
-        }
-        mlflow.log_params(best_params)
-
-        booster = xgb.train(
-            params=best_params, dtrain=train, num_boost_round=30,
-            evals=[(valid, 'validation')], early_stopping_rounds=50
-        )
-
-        y_pred = booster.predict(valid)
+        # Evaluate the model
+        y_pred = lr.predict(X_val)
         rmse = root_mean_squared_error(y_val, y_pred)
-        print(f"Validation RMSE: {rmse}")
+        
+        # Log everything to MLflow
+        mlflow.log_param("model_class", "LinearRegression")
         mlflow.log_metric("rmse", rmse)
+        mlflow.log_metric("intercept", intercept)
 
+        # Save and log the preprocessor
         models_folder = Path('models')
         models_folder.mkdir(exist_ok=True)
         preprocessor_path = models_folder / "preprocessor.b"
@@ -85,12 +90,14 @@ def train_model_and_log_results(X_train, y_train, X_val, y_val, dv: DictVectoriz
             pickle.dump(dv, f_out)
         mlflow.log_artifact(preprocessor_path, artifact_path="preprocessor")
 
-        mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+        # Log the scikit-learn model
+        mlflow.sklearn.log_model(lr, artifact_path="models_mlflow")
+# ----------------------------------------------------
 
 
 @flow
 def main_run(train_year: int, train_month: int, val_month_offset: int = 1):
-    """Главный пайплайн, который принимает год и месяц в качестве параметров."""
+    """The main pipeline that now trains a Linear Regression model."""
     val_year = train_year
     val_month = train_month + val_month_offset
     
@@ -98,9 +105,11 @@ def main_run(train_year: int, train_month: int, val_month_offset: int = 1):
         val_month = 1
         val_year += 1
 
-
     df_train = read_dataframe(year=train_year, month=train_month)
     df_val = read_dataframe(year=val_year, month=val_month)
+
+    print(f"Records for training (after filtering): {len(df_train)}")
+    print(f"Records for validation (after filtering): {len(df_val)}")
 
     X_train, dv = create_X(df_train)
     X_val, _ = create_X(df_val, dv=dv)
@@ -109,21 +118,18 @@ def main_run(train_year: int, train_month: int, val_month_offset: int = 1):
     y_train = df_train[target].values
     y_val = df_val[target].values
 
-    nnz_train = X_train.getnnz()
-    print(f"Number of non-zero elements in train matrix: {nnz_train}")
+    print(f"The shape of the training matrix is: {X_train.shape}")
 
-    nnz_val = X_val.getnnz()
-    print(f"Number of non-zero elements in validation matrix: {nnz_val}")
-
-    train_model_and_log_results(X_train, y_train, X_val, y_val, dv)
+    # --- 4. MODIFIED: Call the new training task ---
+    train_linear_regression_model(X_train, y_train, X_val, y_val, dv)
+    # ---------------------------------------------
 
 
-# <-- 2. Используем argparse для получения параметров из командной строки
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train a model to predict taxi trip duration using a Prefect flow.')
-    parser.add_argument('--year', type=int, required=True, help='Year of the data to train on (e.g., 2023)')
-    parser.add_argument('--month', type=int, required=True, help='Month of the data to train on (e.g., 3 for March)')
+    parser = argparse.ArgumentParser(description='Train a model to predict taxi trip duration.')
+    # Using January and February data is standard for this part of the homework
+    parser.add_argument('--year', type=int, default=2023, help='Year of the data to train on')
+    parser.add_argument('--month', type=int, default=1, help='Month of the data to train on')
     args = parser.parse_args()
 
-    # Передаем полученные аргументы в наш пайплайн
     main_run(train_year=args.year, train_month=args.month, val_month_offset=1)
