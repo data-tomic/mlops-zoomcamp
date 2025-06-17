@@ -182,4 +182,74 @@ In the `Pipfile.lock` file, find the `"scikit-learn"` section:
     "version": "==1.3.2"
 },
 ```
-**Answer: `sha256:04026
+**Answer: `sha256:0402638c9a7c219ee52c94cbebc8fcb5eb9fe9c773717965c1f4185588ad3107`**
+
+### Q5: Script Parametrization
+
+**Question:** What's the mean predicted duration for April 2023?
+
+**Method:**
+1.  Modify the script to accept `year` and `month` as command-line arguments (`--year`, `--month`) using the `argparse` library.
+2.  Run the script inside the `pipenv` virtual environment, providing the parameters for April 2023.
+
+**File: `homework_q5.py`**
+*(Only the key part of the script is shown below)*
+```python
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(...)
+    parser.add_argument('--year', type=int, required=True, help='The year to process')
+    parser.add_argument('--month', type=int, required=True, help='The month to process')
+    args = parser.parse_args()
+    run(args.year, args.month)
+```**Command to run:**
+```bash
+pipenv run python homework_q5.py --year 2023 --month 4
+```
+**Answer: 14.29**
+
+### Q6: Running in a Docker Container
+
+**Question:** What's the mean predicted duration for May 2023 when running in Docker?
+
+**Method:**
+1.  Create a `Dockerfile` that uses the `agrigorev/zoomcamp-model:mlops-2024-3.10.13-slim` base image.
+2.  In the `Dockerfile`, install dependencies from `Pipfile.lock`.
+3.  Copy the parametrized script (`homework_q6.py`) into the container.
+4.  Build the Docker image and run the container, passing the arguments for May 2023.
+
+**File: `Dockerfile`**
+```dockerfile
+FROM agrigorev/zoomcamp-model:mlops-2024-3.10.13-slim
+
+RUN pip install pipenv
+
+COPY ["Pipfile", "Pipfile.lock", "./"]
+
+RUN pipenv install --system --deploy
+
+COPY homework_q6.py .
+
+ENTRYPOINT ["python", "homework_q6.py"]
+```
+**Commands to run:**
+```bash
+# Build the image
+docker build -t batch-prediction-may .
+
+# Run the container
+docker run -it --rm batch-prediction-may --year 2023 --month 5
+```
+**Answer: 0.19**
+
+---
+
+## 🏁 Final Results Summary
+
+| Question | Topic                            | Answer                                                                 |
+| :------: | :------------------------------- | :--------------------------------------------------------------------- |
+| **Q1**   | Standard Deviation               | `6.24`                                                                 |
+| **Q2**   | Parquet File Size                | `66M`                                                                  |
+| **Q3**   | Notebook Conversion              | `jupyter nbconvert --to script starter.ipynb`                          |
+| **Q4**   | `scikit-learn` Dependency Hash   | `sha256:0402638c9a7c219ee52c94cbebc8fcb5eb9fe9c773717965c1f4185588ad3107` |
+| **Q5**   | Mean Prediction (April 2023)     | `14.29`                                                                |
+| **Q6**   | Mean Prediction in Docker (May 2023) | `0.19`                                                                 |
