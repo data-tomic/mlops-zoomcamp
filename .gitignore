@@ -182,3 +182,8 @@ __pycache__/
 
 # MLflow data
 mlflow_data/
+
+Pipfile
+Pipfile.lock
+*.parquet
+model.bin
