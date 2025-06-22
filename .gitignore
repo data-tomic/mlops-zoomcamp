@@ -188,3 +188,5 @@ Pipfile.lock
 *.parquet
 model.bin
 Miniconda3-latest-Linux-x86_64.sh
+workspace
+models
