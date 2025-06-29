@@ -1,8 +1,9 @@
-import mlflow
+#import mlflow
 from unittest.mock import patch
 
 # Импортируем вашу основную функцию или скрипт
 # from .. import train  # Пример, если у вас есть train.py
+
 
 @patch("mlflow.start_run")
 def test_training_script_runs(mock_start_run):
@@ -12,10 +13,10 @@ def test_training_script_runs(mock_start_run):
     """
     try:
         # Здесь мы бы вызвали основную функцию вашего скрипта
-        # train.run() 
+        # train.run()
         # Поскольку у нас нет этой функции, мы просто симулируем ее вызов
         # и проверяем, что mlflow.start_run был вызван
-        
+
         # Для простоты, давайте представим, что мы просто импортировали скрипт
         # и это не вызвало ошибок синтаксиса
         assert True
