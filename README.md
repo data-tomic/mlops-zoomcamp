@@ -68,6 +68,53 @@ Most projects in this repository follow a similar setup process:
 
 4.  Follow the instructions in the specific module's `README.md` to run the code or tests.
 
+## Project Automation with Make
+
+This repository includes a centralized `Makefile` to automate common development tasks like installing dependencies, running tests, and linting.
+
+### Prerequisites
+You need to have `make` installed on your system (standard on macOS and Linux).
+
+### Usage
+
+All commands are run from the root of the repository.
+
+*   **Show available commands:**
+    ```bash
+    make
+    ```
+
+*   **Install dependencies for a specific module:**
+    You must specify the module directory using the `MODULE` variable.
+    ```bash
+    make install MODULE=02-experiment-tracking
+    make install MODULE=06-best-practices
+    ```
+
+*   **Run tests for a specific module:**
+    This command will run `pytest` on the tests within the specified module.
+    ```bash
+    make test MODULE=06-best-practices
+    ```
+
+*   **Lint the entire project:**
+    This runs `flake8` to check for code style issues across all files.
+    ```bash
+    make lint
+    ```
+
+*   **Format the entire project:**
+    This runs `black` to automatically format all Python code.
+    ```bash
+    make format
+    ```
+
+*   **Clean up temporary files:**
+    This will remove all `__pycache__` directories and `.pyc` files.
+    ```bash
+    make clean
+    ```
+
 ## Acknowledgements
 
 A huge thank you to the **[DataTalks.Club](https://datatalks.club/)** team, **Alexey Grigorev**, and the entire community for creating and supporting this invaluable, free, and practical course.

@@ -1,7 +1,7 @@
 import pandas as pd
 
 # URL файла с данными за март 2024
-url = 'https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2024-03.parquet'
+url = "https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2024-03.parquet"
 
 # Чтение данных из Parquet файла
 # Убедитесь, что у вас установлена библиотека pyarrow или fastparquet
