@@ -29,7 +29,7 @@ jobs:
       matrix:
         # Мы можем вернуть сюда все модули, т.к. тесты будут запускаться
         # только для тех, у кого есть папка tests/
-        module: ['06-best-practices'] 
+        module: ['02-experiment-tracking', '03-orchestration', '04-deployment', '05-monitoring', '06-best-practices'] 
         # (оставим пока один для скорости отладки)
 
     # Мы пока уберем этот блок, так как юнит-тестам он не нужен.
