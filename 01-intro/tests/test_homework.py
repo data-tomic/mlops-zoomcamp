@@ -33,4 +33,4 @@ def test_data_preparation():
     df = df[(df.duration >= 1) & (df.duration <= 60)]
 
     assert len(df) == 2  # Обе поездки должны остаться
-    assert 'duration' in df.columnsv
+    assert 'duration' in df.columns
