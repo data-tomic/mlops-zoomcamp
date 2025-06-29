@@ -2,15 +2,16 @@ import os
 import pandas as pd
 from datetime import datetime
 
+
 # Функция для создания тестовых дат
 
-def dt(hour, minute, second=0):
-    
-    return datetime(2023, 1, 1, hour, minute, second)
 
+def dt(hour, minute, second=0):
+    return datetime(2023, 1, 1, hour, minute, second)
 # --- Читаем параметры из переменных окружения ---
 # Пайплайн передаст сюда значения из UI.
 # Если запускаем локально и переменные не заданы, используются значения по умолчанию.
+
 
 YEAR = int(os.getenv("YEAR", "2023"))
 
