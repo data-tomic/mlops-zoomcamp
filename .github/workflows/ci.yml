@@ -10,7 +10,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      # ... шаги для линтера остаются без изменений ...
+      # ... шаги для линтера без изменений ...
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -27,17 +27,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Мы можем вернуть сюда все модули, т.к. тесты будут запускаться
-        # только для тех, у кого есть папка tests/
-        module: ['02-experiment-tracking', '03-orchestration', '04-deployment', '05-monitoring', '06-best-practices'] 
-        # (оставим пока один для скорости отладки)
-
-    # Мы пока уберем этот блок, так как юнит-тестам он не нужен.
-    # Он понадобится, если мы решим запускать интеграционные тесты в CI.
-    # env:
-    #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #   AWS_REGION: ${{ secrets.AWS_REGION }}
+        # Теперь можно безопасно вернуть все модули
+        module: ['02-experiment-tracking', '03-orchestration', '04-deployment', '05-monitoring', '06-best-practices']
 
     steps:
       - name: Check out repository code
@@ -55,7 +46,9 @@ jobs:
       - name: Install pytest
         run: pip install pytest
         
-      # --- ИЗМЕНЕННАЯ КОМАНДА ---
+      # --- ВОЗВРАЩАЕМ УСЛОВИЕ IF ---
       - name: Test with pytest for ${{ matrix.module }}
-        # Запускаем pytest и указываем ему конкретную папку с юнит-тестами
-        run: pytest ${{ matrix.module }}/tests/
+        # Этот шаг будет выполнен, только если папка tests/ существует и не пуста
+        if: hashFiles(format('{0}/tests/**', matrix.module)) != ''
+        run: |
+          pytest ${{ matrix.module }}/tests/
