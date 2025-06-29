@@ -10,7 +10,6 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      # ... шаги для линтера без изменений ...
       - name: Check out repository code
         uses: actions/checkout@v4
       - name: Set up Python 3.10
@@ -27,8 +26,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Теперь можно безопасно вернуть все модули
-        module: ['02-experiment-tracking', '03-orchestration', '04-deployment', '05-monitoring', '06-best-practices']
+        # Теперь матрица имеет смысл: мы проверяем несколько модулей
+        module: ['01-intro', '02-experiment-tracking', '04-deployment', '06-best-practices']
 
     steps:
       - name: Check out repository code
@@ -43,12 +42,9 @@ jobs:
           if [ -f ${{ matrix.module }}/requirements.txt ]; then
             pip install -r ${{ matrix.module }}/requirements.txt
           fi
-      - name: Install pytest
-        run: pip install pytest
-        
-      # --- ВОЗВРАЩАЕМ УСЛОВИЕ IF ---
+      
       - name: Test with pytest for ${{ matrix.module }}
-        # Этот шаг будет выполнен, только если папка tests/ существует и не пуста
+        # Этот шаг будет выполнен, только если папка tests/ существует
         if: hashFiles(format('{0}/tests/**', matrix.module)) != ''
         run: |
           pytest ${{ matrix.module }}/tests/

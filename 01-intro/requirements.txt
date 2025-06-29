@@ -1,6 +1,4 @@
 pandas
 scikit-learn
 pyarrow
-Flask
-gunicorn
 pytest
