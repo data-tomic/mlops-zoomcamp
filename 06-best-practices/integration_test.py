@@ -5,6 +5,7 @@ from datetime import datetime
 # Функция для создания тестовых дат
 
 def dt(hour, minute, second=0):
+    
     return datetime(2023, 1, 1, hour, minute, second)
 
 # --- Читаем параметры из переменных окружения ---
@@ -12,6 +13,7 @@ def dt(hour, minute, second=0):
 # Если запускаем локально и переменные не заданы, используются значения по умолчанию.
 
 YEAR = int(os.getenv("YEAR", "2023"))
+
 MONTH = int(os.getenv("MONTH", "1"))
 
 print(f"Running integration test for YEAR={YEAR}, MONTH={MONTH}")
@@ -25,7 +27,7 @@ data = [
     (None, None, dt(1, 1), dt(1, 10)),
     (1, 1, dt(1, 2), dt(1, 10)),
     (1, None, dt(1, 2, 0), dt(1, 2, 59)),
-    (3, 4, dt(1, 2, 0), dt(2, 2, 1)),   
+    (3, 4, dt(1, 2, 0), dt(2, 2, 1)),
 ]
 columns = ['PULocationID', 'DOLocationID', 'tpep_pickup_datetime', 'tpep_dropoff_datetime']
 df_input = pd.DataFrame(data, columns=columns)
