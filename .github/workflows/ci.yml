@@ -1,0 +1,73 @@
+# Название нашего CI-пайплайна
+name: Python Code Quality CI
+
+# Триггеры запуска
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+# Задачи (jobs)
+jobs:
+  # --- ЗАДАЧА 1: Глобальный линтинг ---
+  # Эта задача запускается один раз для всего проекта
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      
+      - name: Install flake8
+        run: pip install flake8
+      
+      - name: Lint with flake8
+        # Настройки берутся из файла .flake8 в корне проекта
+        run: flake8 .
+
+  # --- ЗАДАЧA 2: Тестирование модулей (с использованием матрицы) ---
+  # Эта задача будет запущена параллельно для каждого модуля из списка `matrix.module`
+  test-modules:
+    # Запускать эту задачу нужно только если lint прошел успешно
+    needs: lint
+    runs-on: ubuntu-latest
+
+    # Определение матрицы
+    strategy:
+      matrix:
+        # Список ваших модулей, для которых есть зависимости и/или тесты
+        module: ['02-experiment-tracking', '03-orchestration', '04-deployment', '05-monitoring', '06-best-practices']
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies for ${{ matrix.module }}
+        run: |
+          python -m pip install --upgrade pip
+          # Устанавливаем зависимости ТОЛЬКО для текущего модуля из матрицы
+          if [ -f ${{ matrix.module }}/requirements.txt ]; then
+            pip install -r ${{ matrix.module }}/requirements.txt
+          else
+            echo "'${{ matrix.module }}/requirements.txt' not found, skipping installation."
+          fi
+      
+      - name: Install pytest
+        run: pip install pytest
+
+      # Условный шаг: запускаем тесты, только если папка tests существует
+      - name: Test with pytest for ${{ matrix.module }}
+        # Эта проверка важна, т.к. не во всех модулях есть тесты
+        if: success() && hashFiles(format('{0}/tests/**', matrix.module)) != ''
+        run: |
+          pytest ${{ matrix.module }}/
