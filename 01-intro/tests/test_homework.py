@@ -13,12 +13,16 @@ def test_data_preparation():
     # Этот код можно адаптировать под вашу функцию
     # Здесь мы создаем фейковый DataFrame для теста
     data = [
-        {'tpep_pickup_datetime': '2023-01-01 00:00:00', 
-        'tpep_dropoff_datetime': '2023-01-01 00:10:00', 
-        'PULocationID': 1, 'DOLocationID': 2},
-        {'tpep_pickup_datetime': '2023-01-01 00:05:00', 
-        'tpep_dropoff_datetime': '2023-01-01 00:30:00', 
-        'PULocationID': 3, 'DOLocationID': 4},
+        {
+            'tpep_pickup_datetime': '2023-01-01 00:00:00',
+            'tpep_dropoff_datetime': '2023-01-01 00:10:00',
+            'PULocationID': 1, 'DOLocationID': 2
+        },
+        {
+            'tpep_pickup_datetime': '2023-01-01 00:05:00',
+            'tpep_dropoff_datetime': '2023-01-01 00:30:00',
+            'PULocationID': 3, 'DOLocationID': 4
+        },
     ]
     df = pd.DataFrame(data)
     df['tpep_pickup_datetime'] = pd.to_datetime(df['tpep_pickup_datetime'])
