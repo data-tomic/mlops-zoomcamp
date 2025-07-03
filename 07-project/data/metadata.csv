@@ -1,0 +1,21 @@
+file_id,file_name,case_id,sample_type
+3396edba-0d2a-4485-ad0a-5114b38c1abe,2e64abe2-6024-4d28-9e09-560ce2a9fd15.rna_seq.augmented_star_gene_counts.tsv,a76774fe-7298-4d68-a2b2-c1bad93f0c31,Primary Tumor
+d2e2915c-125e-45c6-b7f3-6a815b3d2859,96a45a70-d4b5-4090-b603-73b7379679d6.rna_seq.augmented_star_gene_counts.tsv,c57835be-77ab-4cf5-9b23-62c11a7b2eaf,Primary Tumor
+fb32f0b1-4fb7-43d5-8091-dc13a1f6d9e8,1d468785-141d-40ca-acb1-d6d85a8c9d7b.rna_seq.augmented_star_gene_counts.tsv,f3ba71f9-25f3-4784-bf2d-3aa522a0cba8,Primary Tumor
+de5e449b-bc57-4836-89e4-73a3ba24abdf,748e4eaa-2b96-4dce-a903-c7df733d7f50.rna_seq.augmented_star_gene_counts.tsv,4dfc233b-ed03-4825-8089-e04cdee99996,Primary Tumor
+a58e2ae3-a236-4209-8292-70465216cb85,e614fbb4-7574-4704-9525-c0aea4c10fc6.rna_seq.augmented_star_gene_counts.tsv,2fe854b4-bac9-4801-9a1c-ee99388e8082,Primary Tumor
+f7b5d569-1a46-4f23-bfca-a46daacda793,ad8c55ae-46df-43cd-8cb5-c049e3019959.rna_seq.augmented_star_gene_counts.tsv,30047d32-0833-4aca-98d1-3b9ab7122863,Primary Tumor
+7af23ba7-e5bf-41b9-b91f-5709321dadb7,073939c1-c857-4340-8a5f-a7b87d2349c3.rna_seq.augmented_star_gene_counts.tsv,241fffc8-4250-4cfa-b2e7-e68c33ae07dc,Primary Tumor
+67eceef4-f870-47a0-82d8-b39aa3282bd3,8087339c-4fdc-42e4-94ff-299a59ae88a3.rna_seq.augmented_star_gene_counts.tsv,af2a8e2f-2ae1-48bc-bba5-0e2c077c4e48,Primary Tumor
+ecf9996e-0cba-4394-9f5a-51fceab1ac56,47bdf86d-922f-4615-b7dc-8b19a0cbcf60.rna_seq.augmented_star_gene_counts.tsv,af5453a9-cf1f-40de-aec4-0e0710908fb7,Primary Tumor
+11631339-f447-4b28-97a8-3c7c6ccbc843,97ec0a19-d386-48fc-842c-78488b0d41f3.rna_seq.augmented_star_gene_counts.tsv,31427699-e27a-4035-8925-6d8d6900d097,Primary Tumor
+456bc30b-59f8-4427-b798-5b113ca635a0,653ddf67-d2ac-4fc7-8e95-b4a078e27806.rna_seq.augmented_star_gene_counts.tsv,cc074b7f-d3b2-4880-902e-bf10e667b665,Solid Tissue Normal
+c6a4afd8-8044-475f-b4fd-a1b4cb922976,58bcabc9-6f6b-43c0-bf40-fa9396c6c9d7.rna_seq.augmented_star_gene_counts.tsv,d8492ebd-3d94-4a4b-8de7-386526691cc2,Solid Tissue Normal
+18b0bd2d-505f-4ecb-9bea-b52e6a74cebd,678aa892-0631-47cc-b19e-cdcef42cecb3.rna_seq.augmented_star_gene_counts.tsv,d8ecba6a-9fff-4993-a799-9a8d2aea524e,Solid Tissue Normal
+75182885-7501-49b1-bb0d-8a88da1080a3,0965a7ff-1a9f-4cc6-a822-970390b2de58.rna_seq.augmented_star_gene_counts.tsv,24334ac1-28a3-4b61-b590-3f51e375b247,Solid Tissue Normal
+52151eca-7819-496e-bf31-4875b68d429d,34478743-530d-4d71-a124-90ad54ded5c1.rna_seq.augmented_star_gene_counts.tsv,b6b1dc9a-91f4-4b0a-afd5-62c9a90c0d5e,Solid Tissue Normal
+d7a48283-c113-4745-be6b-553966e6b457,151af32a-7367-4e35-a575-f6da31aa256a.rna_seq.augmented_star_gene_counts.tsv,f130f376-5801-40f9-975d-a7e2f7b5670d,Solid Tissue Normal
+2bf56d2d-8c5e-4579-847b-03fd0ba46143,fb3713b9-fad5-4d66-b419-8f53530b14cd.rna_seq.augmented_star_gene_counts.tsv,f2bbfa9d-9a9d-4f46-9fde-378e4c44e2ad,Solid Tissue Normal
+eddb2dc6-2b72-43a8-a7fc-3dd09dde68af,316d8a79-9084-4355-9de7-e29503bf0864.rna_seq.augmented_star_gene_counts.tsv,c348a9b3-c901-4384-a222-144387bac0c5,Solid Tissue Normal
+699e47b8-5396-43eb-927d-8d05b0e79644,1dd6852b-2456-4576-9b22-f7604277c955.rna_seq.augmented_star_gene_counts.tsv,b3264748-947a-43aa-b227-b294fbcc8447,Solid Tissue Normal
+e84b9f1a-0def-425b-86c1-c143b27509b5,4497500a-5721-4d7a-8ed9-1ba7b42fb6ab.rna_seq.augmented_star_gene_counts.tsv,f6581eee-61b9-43d4-ab0d-ce5ce3ba1c74,Solid Tissue Normal

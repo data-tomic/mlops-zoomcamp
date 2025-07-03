@@ -190,3 +190,22 @@ model.bin
 Miniconda3-latest-Linux-x86_64.sh
 workspace
 models
+
+
+# ================================
+# Project Data - DO NOT COMMIT
+# ================================
+
+# Игнорировать все внутри папок с данными
+07-project/data/raw/*
+07-project/data/processed/*
+
+# Но НЕ игнорировать сами папки и файлы .gitignore в них, если они появятся
+!07-project/data/raw/.gitkeep
+!07-project/data/processed/.gitkeep
+
+# Также НЕ игнорировать наши метаданные и манифесты
+!07-project/data/metadata.csv
+!07-project/data/manifest.txt
+
+mlruns

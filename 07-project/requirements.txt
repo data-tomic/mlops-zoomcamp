@@ -1,0 +1,19 @@
+# Core libraries
+pandas
+scikit-learn
+
+# MLOps Toolkit
+mlflow
+prefect
+fastapi
+uvicorn[standard]
+python-dotenv
+evidently
+
+# Code quality
+black
+flake8
+
+# Notebooks
+jupyter
+ipykernel
