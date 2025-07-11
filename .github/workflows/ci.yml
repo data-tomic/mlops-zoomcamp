@@ -48,4 +48,4 @@ jobs:
         # This step will now run for '07-project' because the tests/ directory exists
         if: hashFiles(format('{0}/tests/**', matrix.module)) != ''
         run: |
-          pytest ${{ matrix.module }}/tests/
+          PYTHONPATH=${{ matrix.module }} pytest ${{ matrix.module }}/tests/
