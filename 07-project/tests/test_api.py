@@ -1,19 +1,12 @@
-# 07-project/tests/test_api.py
+# 07-project/tests/test_api.py (Final Corrected Version)
 
 from fastapi.testclient import TestClient
 
-# We need to be able to import the app from the api directory
-import sys
-import os
+# We can now directly import from 'src' because of the __init__.py files,
+# making the test environment-independent.
+from src.api.main import app
 
-# Now we can import the app
-from api.main import app
-
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../src")))
-
-
-# Create a TestClient instance
+# Create a TestClient instance for making requests
 client = TestClient(app)
 
 
@@ -30,10 +23,10 @@ def test_read_root():
 def test_predict_endpoint_model_not_loaded():
     """
     Test the predict endpoint's behavior when the model is not loaded.
-    NOTE: This test assumes the test environment does not load the model.
-    If your test setup changes to load a model, this test will need to be adapted.
+    In a test environment, the lifespan event that loads the model does not run by default,
+    so the model should be None.
     """
-    # Create a valid payload
+    # Create a valid payload based on the Pydantic model
     valid_payload = {
         "Age": 1,
         "Gender": 0,
