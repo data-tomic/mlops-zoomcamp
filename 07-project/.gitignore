@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+
+# MLflow
+/mlruns/
+/mlflow.db
+
+# Temporary artifacts
+column_order.json
+
+# IDE / Editor specific
+.vscode/
+.idea/
+*.swp
+*.swo

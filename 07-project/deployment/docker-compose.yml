@@ -1,0 +1,27 @@
+# deployment/docker-compose.yml (Финальная версия)
+services:
+  mlflow-server:
+    container_name: mlflow_tracking_server
+    image: python:3.12-slim
+    command: >
+      sh -c "pip install mlflow boto3 &&
+             mlflow server --host 0.0.0.0 --port 5000
+             --backend-store-uri sqlite:////mlruns/mlflow.db
+             --default-artifact-root /mlruns"
+    ports:
+      - "5000:5000"
+    volumes:
+      # Монтируем локальную папку в абсолютный путь внутри контейнера
+      - ../mlruns:/mlruns
+    
+  sepsis_api: 
+    container_name: sepsis_api
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
+    depends_on:
+      - mlflow-server

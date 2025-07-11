@@ -1,77 +1,71 @@
-# 07-project/src/data_processing.py (ФИНАЛЬНАЯ РАБОЧАЯ ВЕРСИЯ)
+# src/data_processing.py (English Version)
 
 import os
+import click
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
-def process_downloaded_data():
-    """
-    Читает скачанные файлы, агрегирует данные по генам и объединяет
-    в единую матрицу экспрессии, сохраняя ее в папку processed.
-    """
-    raw_data_path = "07-project/data/raw/"
-    processed_data_path = "07-project/data/processed/"
-    metadata_path = "07-project/data/metadata.csv"
-    output_path = os.path.join(processed_data_path, "gene_expression_matrix.csv")
 
-    print("1. Загрузка метаданных...")
+def run_data_processing(raw_data_path: str, dest_path: str, target_col: str):
+    """
+    Main logic for processing clinical_data.csv.
+    Reads the CSV, cleans it, splits it into train/validation sets, and saves them as pickle files.
+    """
+    print(f"1. Reading raw data from: {raw_data_path}")
     try:
-        metadata = pd.read_csv(metadata_path)
+        # Fixed: Added sep=';' to correctly parse the columns
+        df = pd.read_csv(raw_data_path, sep=";")
+        print("CSV file successfully read with ';' delimiter.")
     except FileNotFoundError:
-        print(f"ОШИБКА: Файл метаданных не найден по пути {metadata_path}")
+        print(f"ERROR: File not found at {raw_data_path}. Please ensure it exists.")
         return
 
-    all_samples_dfs = []
-    print(f"2. Начало обработки {len(metadata)} файлов...")
+    # --- Data Cleaning ---
+    df = df.drop(columns=["ID", "Group"], errors="ignore")
+    print("Dropped 'ID' and 'Group' columns.")
 
-    for index, row in metadata.iterrows():
-        file_id = row['file_id']
-        full_file_path = os.path.join(raw_data_path, file_id)
-        
-        try:
-            # --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ: ЧИТАЕМ ПРАВИЛЬНЫЙ ФОРМАТ ---
-            df = pd.read_csv(
-                full_file_path,
-                sep='\t',
-                header=None,
-                skiprows=4,
-                # 1. Указываем имена для ВСЕХ 4 колонок
-                names=['gene_id_version', 'unstranded', 'stranded_first', 'stranded_second']
-            )
-            
-            # Мы используем 'unstranded' счетчики для нашего анализа
-            df_selected = df[['gene_id_version', 'unstranded']].copy()
+    # Simple missing value strategy: fill with median
+    # Fixed: Added numeric_only=True for robustness
+    df.fillna(df.median(numeric_only=True), inplace=True)
+    print("Filled missing values with median.")
 
-            # 2. ПРИНУДИТЕЛЬНО конвертируем колонку в string ПЕРЕД использованием .str
-            df_selected['gene_id'] = df_selected['gene_id_version'].astype(str).str.split('.').str[0]
-            
-            # Группируем по очищенному ID и суммируем
-            df_aggregated = df_selected.groupby('gene_id')['unstranded'].sum().reset_index()
-            
-            df_aggregated.set_index('gene_id', inplace=True)
-            df_aggregated.rename(columns={'unstranded': file_id}, inplace=True)
-            
-            all_samples_dfs.append(df_aggregated)
-            
-        except Exception as e:
-            print(f"  - ОШИБКА при обработке файла {file_id}: {e}")
-            # Прерываем цикл в случае ошибки, чтобы не выводить 20 одинаковых сообщений
-            break 
+    # Define features (X) and target (y)
+    X = df.drop(columns=["Outcome_int", "ICU_stay"], errors="ignore")
+    y = df[target_col]
+    print(f"Target variable for the model: '{target_col}'")
 
-    if len(all_samples_dfs) != len(metadata):
-        print("\nОШИБКА: Обработка файлов была прервана. Финальная матрица не будет создана.")
-        return
-        
-    print("3. Объединение всех образцов в единую матрицу...")
-    final_matrix = pd.concat(all_samples_dfs, axis=1)
-    
-    print("4. Сохранение итоговой матрицы...")
-    final_matrix.fillna(0, inplace=True) 
-    final_matrix.to_csv(output_path)
-    
-    print(f"\nУСПЕХ! Матрица экспрессии сохранена в:")
-    print(output_path)
-    print(f"Размер матрицы: {final_matrix.shape[0]} генов x {final_matrix.shape[1]} образцов")
+    # --- Data Splitting ---
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    print(
+        f"Data split into training ({X_train.shape[0]} rows) and validation ({X_val.shape[0]} rows) sets."  # noqa E501
+    )
+
+    # --- Save Processed Data ---
+    os.makedirs(dest_path, exist_ok=True)
+    X_train.to_pickle(os.path.join(dest_path, "X_train.pkl"))
+    y_train.to_pickle(os.path.join(dest_path, "y_train.pkl"))
+    X_val.to_pickle(os.path.join(dest_path, "X_val.pkl"))
+    y_val.to_pickle(os.path.join(dest_path, "y_val.pkl"))
+
+    print(f"Processed data successfully saved to: {dest_path}")
+
+
+@click.command()
+@click.option(
+    "--raw-data-path",
+    default="data/clinical_data.csv",
+    help="Path to the raw CSV file.",
+)  # noqa E501
+@click.option(
+    "--dest-path", default="data/processed", help="Folder to save processed data."
+)
+@click.option("--target-col", default="Outcome_int", help="Name of the target column.")
+def process_data_command(raw_data_path: str, dest_path: str, target_col: str):
+    """Command-line entry point to run data processing."""
+    run_data_processing(raw_data_path, dest_path, target_col)
 
 
 if __name__ == "__main__":
-    process_downloaded_data()
+    process_data_command()
