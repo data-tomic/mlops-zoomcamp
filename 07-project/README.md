@@ -1,166 +1,158 @@
-# MLOps Project: End-to-End Genomics Pipeline for Cancer Classification
+Of course. Creating a high-quality `README.md` is the final and most important step to make your project understandable, reproducible, and professional.
 
-This project is part of the [DataTalksClub MLOps Zoomcamp](https://github.com/DataTalksClub/mlops-zoomcamp). The primary goal is to build a complete, end-to-end MLOps pipeline for a real-world bioinformatics problem: classifying tumor samples from gene expression data.
+Based on our entire journey, here is a comprehensive `README.md` file written in English. It covers the project's architecture, file structure, dataset, and provides a clear, step-by-step guide for anyone to set up and run your project.
 
-**Project Goal:** To automate the process of data ingestion, processing, model training, deployment, and monitoring for classifying tumor vs. normal tissue samples from the TCGA-BRCA (Breast Cancer) dataset.
+**Recommendation:** Copy the entire content below and replace the content of your `07-project/README.md` file with it.
 
-## Project Status
+---
 
-**`In Progress`**
+# End-to-End MLOps Pipeline for Neonatal Sepsis Prediction
+
+![CI Badge](https://github.com/data-tomic/mlops-zoomcamp/actions/workflows/ci.yml/badge.svg)
+
+This project demonstrates a complete, end-to-end MLOps lifecycle for a machine learning model that predicts mortality outcomes for neonatal sepsis patients based on clinical data. It serves as a practical example of MLOps best practices, including experiment tracking, model versioning, containerized deployment, and CI/CD for testing.
+
+The primary goal is to build a reliable and reproducible system that automates the process from data processing to a live prediction API.
 
 ## Core Technologies
 
-*   **Data Source**: [Genomic Data Commons (GDC) Portal](https://portal.gdc.cancer.gov/) - TCGA-BRCA Project
-*   **Experiment Tracking**: [MLflow](https://mlflow.org/)
-*   **Workflow Orchestration**: [Prefect](https://www.prefect.io/) `(Next Step)`
-*   **Model Deployment**: [FastAPI](https://fastapi.tiangolo.com/), [Docker](https://www.docker.com/) `(Next Step)`
-*   **Monitoring**: [Evidently AI](https://www.evidentlyai.com/) `(Next Step)`
-*   **CI/CD**: [GitHub Actions](https://github.com/features/actions) `(Next Step)`
-*   **Core Libraries**: Scikit-learn, Pandas
+-   **Containerization:** Docker & Docker Compose
+-   **Experiment Tracking & Model Registry:** MLflow (Client-Server setup)
+-   **Prediction Service:** FastAPI
+-   **Code Quality & Testing:** `pytest`, `flake8`, `black`
+-   **CI/CD:** GitHub Actions
+-   **Core Libraries:** Scikit-learn, Pandas, Hyperopt
 
-## Pipeline Architecture
+## Project Architecture
 
-The end-to-end pipeline is designed as follows:
+This project uses a robust client-server architecture to decouple training from deployment:
 
-`Data Acquisition (GDC API)` -> `Data Processing (Python/Pandas)` -> `Model Training & Experimenting (MLflow)` -> `Workflow Orchestration (Prefect)` -> `Model Deployment (FastAPI + Docker)` -> `Monitoring (Evidently AI)`
+1.  **MLflow Tracking Server:** A dedicated Docker container that runs the MLflow server. It is the central hub for all experiments, model artifacts, and metadata.
+    -   **Backend Store:** Uses a SQLite database (`mlruns/mlflow.db`) to store metadata (parameters, metrics, etc.).
+    -   **Artifact Store:** Uses the local filesystem (`mlruns/`) to store model files, which is made available to the container via a Docker volume.
 
----
+2.  **Prediction API (`sepsis_api`):** A Docker container running a FastAPI application.
+    -   On startup, it queries the MLflow Tracking Server over the internal Docker network to fetch the model version currently aliased as `"production"`.
+    -   It exposes a `/predict` endpoint to serve predictions.
 
-## Progress So Far (Completed Steps)
+3.  **Local Training Scripts (`train.py`, `data_processing.py`):** These Python scripts are run locally. They communicate with the MLflow Tracking Server via HTTP to log experiments, artifacts, and register new model versions.
 
-### 1. Project Setup
-*   **Structured Repository:** Established a clean project structure within `07-project/` to separate concerns (`src`, `data`, `notebooks`, `tests`, etc.).
-*   **Environment Management:** Created a `requirements.txt` to manage all Python dependencies and a `Makefile` for convenience commands.
+This setup ensures that the training environment and the production environment are completely separate but share a centralized model registry, which is a core MLOps principle.
 
-### 2. Data Acquisition & Ingestion
-*   **Data Sourcing:** Implemented a Jupyter Notebook (`notebooks/1-eda-and-data-download.ipynb`) to programmatically query the GDC API.
-*   **Data Selection:** Pivoted from the controlled-access `TARGET-ALL` dataset to the publicly available **`TCGA-BRCA`** project. We are using `Gene Expression Quantification` data (`STAR-Counts` workflow).
-*   **Data Download:** Successfully downloaded a balanced subset of 20 samples (10 Tumor, 10 Normal) using a `curl`-based script after extensive debugging of the official `gdc-client`. The download process is driven by a `manifest.txt` file, making it reproducible.
+## File Structure
 
-### 3. Data Processing
-*   **Data Consolidation:** Created a robust Python script (`src/data_processing.py`) that reads the 20 raw, separate data files.
-*   **Data Cleaning & Aggregation:** The script correctly handles the specific format of `STAR-Counts` files by:
-    1.  Skipping the first 4 header lines.
-    2.  Parsing the multi-column format.
-    3.  Cleaning gene IDs to remove version numbers (e.g., `ENSG000...1.5` -> `ENSG000...1`).
-    4.  Aggregating duplicate gene entries by summing their counts.
-*   **Final Matrix Creation:** The script generates a final, analysis-ready matrix of `16377 genes x 20 samples` and saves it to `data/processed/gene_expression_matrix.csv`.
+The project is organized to separate concerns, making it clean and scalable.
 
-### 4. Model Training & Experiment Tracking
-*   **MLflow Setup:** Successfully configured MLflow to track experiments locally in a `mlruns` directory.
-*   **Baseline Model:** Implemented a training script (`src/train.py`) that trains a `LogisticRegression` model as a baseline.
-*   **Iteration & Comparison:** Ran a second experiment with a `RandomForestClassifier` to demonstrate iterative model improvement.
-*   **Comprehensive Logging:** For each run, we are logging:
-    *   **Parameters:** Model type and its hyperparameters.
-    *   **Metrics:** `accuracy` and `f1_score`.
-    *   **Artifacts:** The trained Scikit-learn model itself.
-*   **UI Visualization:** Successfully launched and used the `mlflow ui` to compare the two experimental runs.
+```
+07-project/
+├── data/
+│   └── clinical_data.csv      # The raw input dataset for the project.
+├── deployment/
+│   ├── Dockerfile             # Defines the Docker image for the FastAPI prediction service.
+│   └── docker-compose.yml     # Defines and orchestrates the multi-container setup (API + MLflow Server).
+├── src/
+│   ├── api/
+│   │   ├── __init__.py
+│   │   └── main.py            # The FastAPI application code.
+│   ├── __init__.py
+│   ├── data_processing.py     # Script to clean and prepare the raw data.
+│   └── train.py               # Script to run HPO, train the model, and log to MLflow.
+├── tests/
+│   └── test_api.py            # Unit tests for the FastAPI application.
+├── .gitignore                 # Specifies files and directories to be ignored by Git.
+├── Makefile                   # Provides convenience commands for managing the project.
+└── requirements.txt           # A list of all Python dependencies for the project.
+```
 
----
+## Dataset
 
-## Next Steps (To-Do)
+The dataset used is `data/clinical_data.csv`, which contains clinical and laboratory data for neonatal patients.
 
-### 1. Model Improvement & Hyperparameter Tuning
-*   [ ] **Data Preprocessing:** Implement data normalization/scaling (e.g., `TMM normalization` or `log-transformation`), which is crucial for RNA-Seq data.
-*   [ ] **Feature Selection:** Add a step to select the most relevant genes (features) to reduce dimensionality and improve performance (e.g., using variance thresholding or statistical tests).
-*   [ ] **Hyperparameter Tuning:** Use a library like `Hyperopt` integrated with MLflow to automatically find the best hyperparameters for our model.
+-   **Target Variable:** The goal is to predict the `Outcome_int` column, where `1` likely represents mortality and `0` represents survival.
+-   **Features:** The dataset includes a rich set of features such as:
+    -   Demographics: `Age`, `Gender`, `Gestation`
+    -   Vital Signs: `Temperature`, `Heart_rate`, `Breath_rate`
+    -   Lab Results: `WBC`, `CRP`, `Lactate`, `Bilirubin`
+    -   Immunological Markers: `CD64_NEU_DAY_1`, `HLA-DR_MON_MFI_DAY_1`
+    -   Scoring Systems: `Total_SOFA`
 
-### 2. Workflow Orchestration
-*   [ ] **Create a Prefect Flow:** Convert the data processing and training scripts into a single, automated Prefect workflow (`@flow` and `@task` decorators). The flow will be: `process_data` -> `train_model`.
+## Setup and Installation
 
-### 3. Model Deployment
-*   [ ] **Develop a Prediction Service:** Create a `FastAPI` application that loads the best model from the MLflow Model Registry and exposes a prediction endpoint.
-*   [ ] **Containerize the Service:** Write a `Dockerfile` to package the FastAPI application, ensuring all dependencies are included.
+To run this project, you will need `git`, `Docker`, `Docker Compose`, and a local installation of `Python 3.12`.
 
-### 4. CI/CD Automation
-*   [ ] **Set up GitHub Actions:** Create `.github/workflows/ci-cd.yaml`.
-*   [ ] **Continuous Integration (CI):** Implement a workflow that runs on every push to automatically lint (`flake8`) and test (`pytest`) the code.
-*   [ ] **Continuous Deployment (CD):** Implement a workflow that, on a Git tag (e.g., `v1.0`), triggers the Prefect flow to retrain the model and, if successful, builds and pushes the new Docker image to a container registry.
-
-### 5. Monitoring
-*   [ ] **Implement Evidently AI:** Create a script to generate monitoring reports.
-*   [ ] **Data Drift:** Compare incoming data distributions against the training data.
-*   [ ] **Model Performance:** Track model metrics on new data (if labels are available).
-*   [ ] **Integrate into Pipeline:** Add a monitoring step to the Prefect flow or CI/CD pipeline.
-
----
-
-Excellent point. The `curl` command is a critical, non-obvious part of our current data acquisition process. I will integrate it directly into the `README.md`.
-
-Here is the updated section `How to Run the Project (Current State)`. I've replaced the generic instruction with the exact `curl` loop we developed.
-
----
-
-## How to Run the Project (Current State)
-
-1.  **Clone the repository:**
+1.  **Clone the Repository**
     ```bash
     git clone https://github.com/data-tomic/mlops-zoomcamp.git
-    cd mlops-zoomcamp
+    cd mlops-zoomcamp/07-project
     ```
 
-2.  **Set up the environment:**
+2.  **Set up the Local Environment**
+    This project uses a `Makefile` to simplify setup. The `install` command will create a local Python virtual environment (`venv/`) and install all required dependencies from `requirements.txt`.
+
     ```bash
-    python3 -m venv venv
+    # This command creates the venv and installs dependencies into it.
+    make install
+    ```
+    *Note: This requires `python3.12` to be available on your system.*
+
+3.  **Activate the Virtual Environment**
+    Before running any local scripts, you must activate the environment.
+    ```bash
     source venv/bin/activate
-    pip install -r 07-project/requirements.txt
     ```
 
-3.  **Run the data pipeline:**
-    This process is divided into two parts: generating the download manifest and then downloading the data.
+## End-to-End Workflow
 
-    **A. Generate the Download Manifest:**
-    *   Run the Jupyter Notebook to create the list of files to download. This will create `manifest.txt` and `metadata.csv` in the `07-project/data/` directory.
-    *   You can execute the notebook manually or use a command-line tool like `nbconvert`.
+This project is orchestrated by Prefect, allowing you to run the entire training pipeline with a single command.
 
-    **B. Download the Raw Data:**
-    *   Navigate to the target directory for raw data:
-    ```bash
-    mkdir -p 07-project/data/raw
-    cd 07-project/data/raw
-    ```
-    *   Run the following `curl` loop in your terminal to download the files listed in `../manifest.txt`. This method is used as a robust alternative to the official `gdc-client`.
-    ```bash
-    while read -r file_id; do
-      # Skip potential empty lines
-      if [ -z "$file_id" ]; then
-        continue
-      fi
-      
-      echo ">>> Downloading file with ID: ${file_id}"
-      
-      # Use curl to download the data file
-      # -O: Saves the file with its original name from the server (which is the file_id)
-      # -L: Follows any HTTP redirects, which is crucial for the GDC API
-      curl -O -L "https://api.gdc.cancer.gov/data/${file_id}"
-      
-      echo "--- Done: ${file_id}"
-      echo "" # Newline for readability
-      
-    done < ../manifest.txt
+### Step 1: Start Services
+First, start the MLflow Tracking Server in the background.
 
-    echo "===== DATA DOWNLOAD COMPLETE ====="
-    ```
-    *   Return to the project root directory:
-    ```bash
-    cd ../../../
-    ```
+```bash
+make run-services
+```
+- This command starts the MLflow container.
+- You can access the MLflow UI at **`http://127.0.0.1:5000`**.
 
-    **C. Process the Raw Data:**
-    *   Run the processing script to combine the downloaded files into a single matrix.
-    ```bash
-    python 07-project/src/data_processing.py
-    ```
+### Step 2: Run the Orchestrated Pipeline
+Instead of running individual scripts, you can now execute the entire workflow with one command. This will process the data and then train the model, logging everything to your running MLflow server.
 
-4.  **Run a training experiment:**
-    ```bash
-    python 07-project/src/train.py
-    ```
+```bash
+make orchestrate
+```
 
-5.  **View the results:**
-    ```bash
-    # Make sure you are in the root of the repository
-    mlflow ui --backend-store-uri file:./mlruns
-    ```
-    Then open `http://127.0.0.1:5000` in your browser.
+### Step 3: Promote the Model
+This manual governance step remains the same.
 
+1.  Go to the MLflow UI at **`http://127.0.0.1:5000`**.
+2.  Navigate to the **"Models"** page and select the **`sepsis-outcome-classifier`** model.
+3.  Find the latest version and assign it the **`production`** alias.
+
+### Step 4: Deploy the Promoted Model
+Restart the API service to force it to load the newly promoted model.
+
+```bash
+make restart-api
+```
+
+### Step 5: Verify and Test
+1.  Check the API logs to confirm the model loaded successfully: `make logs-api`.
+2.  Test the prediction endpoint via the interactive docs at **`http://127.0.0.1:8000/docs`**.
+
+## Makefile Commands
+
+This project uses a `Makefile` to provide a simple, unified interface for common tasks.
+
+| Command             | Description                                                                 |
+| ------------------- | --------------------------------------------------------------------------- |
+| `make install`      | Creates a local Python virtual environment and installs all dependencies.     |
+| `make run-services` | Builds and starts the MLflow and API containers in the background.            |
+| `make stop-services`| Stops and removes all running project containers.                           |
+| `make restart-api`  | Restarts only the API container, typically to load a newly promoted model.    |
+| `make process-data` | Runs the local data processing script.                                      |
+| `make train`        | Runs the local training and hyperparameter optimization script.             |
+| `make test`         | Runs the local unit tests for the API using `pytest`.                       |
+| `make lint`         | Checks the code for style issues using `flake8`.                            |
+| `make format`       | Automatically formats the code using `black`.                               |
+| `make logs-api`     | Follows the real-time logs for the `sepsis_api` container.                  |
+| `make logs-mlflow`  | Follows the real-time logs for the `mlflow_tracking_server` container.        |

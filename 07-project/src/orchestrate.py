@@ -1,41 +1,54 @@
+# 07-project/src/orchestrate.py (Final Corrected Version for Synchronous Execution)
+
 from prefect import flow, task
-from src.data_processing import process_data
-from src.train import run_optimization
+from src.data_processing import run_data_processing
+from src.train import run_train_hpo
 
 
-@task(retries=3, retry_delay_seconds=5)
-def process_data_task(raw_data_dir, processed_data_dir):
-    """Prefect-таск для запуска обработки данных."""
+@task(retries=3, retry_delay_seconds=10, name="Process Sepsis Data")
+def process_data_task():
+    """
+    Prefect task to run the data processing script.
+    """
     print("--- Running Data Processing Task ---")
+    run_data_processing(
+        raw_data_path="data/clinical_data.csv",
+        dest_path="data/processed",
+        target_col="Outcome_int",
+    )
 
-    process_data(raw_data_dir, processed_data_dir)
-    print("--- Data Processing Task Finished ---")
-    return processed_data_dir
 
-
-@task
-def train_model_task(processed_data_dir):
-    """Prefect-таск для запуска обучения и HPO."""
+@task(name="Train Sepsis Model")
+def train_model_task():
+    """
+    Prefect task to run the model training script.
+    """
     print("--- Running Model Training Task ---")
-    run_optimization(
-        data_path=processed_data_dir, num_trials=10
-    )  # Запускаем 10 итераций HPO
-    print("--- Model Training Task Finished ---")
+    run_train_hpo(
+        data_path="data/processed",
+        num_trials=20,
+        model_name="sepsis-outcome-classifier",
+    )
 
 
-@flow(name="TCGA-BRCA Training Pipeline")
-def main_flow():
+@flow(name="Sepsis Training Pipeline")
+def sepsis_training_pipeline():
     """
-    Основной воркфлоу, который объединяет обработку данных и обучение.
-    """
-    # Определяем пути
-    raw_dir = "./data/raw"
-    processed_dir = "./data/processed"
+    The main Prefect flow that orchestrates the tasks sequentially.
 
-    # Запускаем таски
-    processed_path = process_data_task(raw_dir, processed_dir)
-    train_model_task(processed_path)
+    """
+    print("=== Starting Sepsis Training Pipeline ===")
+
+    # --- THIS IS THE FIX ---
+    # We call the tasks directly, without .submit().
+    # The flow will now wait for each task to complete before moving on.
+    process_data_task()
+    train_model_task()
+    # -----------------------
+
+    print("=== Sepsis Training Pipeline Finished Successfully ===")
 
 
 if __name__ == "__main__":
-    main_flow()
+    # This allows the flow to be run directly from the command line.
+    sepsis_training_pipeline()
