@@ -1,9 +1,9 @@
-# .github/workflows/cd.yml
+# .github/workflows/cd.yml (Corrected)
 name: Continuous Delivery - Train Model
 
 on:
   push:
-    branches: [ main ] # Trigger on every push to the main branch
+    branches: [ main ]
 
 jobs:
   train-model:
@@ -18,10 +18,10 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: |
-          pip install --upgrade pip
-          # Assuming requirements are in the project's root
-          pip install -r 07-project/requirements.txt
+        # This path is correct because it's relative to the repo root
+        run: pip install -r 07-project/requirements.txt
       
-      - name: Run training pipeline via orchestrator
-        run: python 07-project/src/orchestrate.py
+      - name: Run training pipeline
+        # CORRECTED: Set working directory and run as a module
+        working-directory: ./07-project
+        run: python -m src.orchestrate
