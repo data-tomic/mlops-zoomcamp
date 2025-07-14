@@ -193,7 +193,7 @@ def get_monitoring_report():
             return HTMLResponse(content=f.read())
     except FileNotFoundError:
         return HTMLResponse(
-            content="<h1>No report generated.</h1><p>This may be because no prediction data has been logged yet.</p>"  # noq E501
+            content="<h1>No report generated.</h1><p>This may be because no prediction data has been logged yet.</p>"  # noqa E501
         )
 
 
