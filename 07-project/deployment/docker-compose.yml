@@ -25,3 +25,9 @@ services:
       - MLFLOW_TRACKING_URI=http://mlflow-server:5000
     depends_on:
       - mlflow-server
+    volumes:
+      # We keep the mlruns mount
+      - ../mlruns:/mlruns
+      # --- THIS IS THE NEW LINE ---
+      # Mount the processed data so the API can access the reference dataset
+      - ../data/processed:/app/data/processed

@@ -6,8 +6,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy only the static application code
-COPY ./src/api /app/src/api
+# NEW, CORRECTED LINE
+# Copy the entire source directory to make all modules available
+COPY ./src /app/src
 
 EXPOSE 8000
 CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

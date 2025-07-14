@@ -3,7 +3,10 @@
 import json
 import pandas as pd
 import mlflow
+import logging
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
+from src.monitoring import generate_drift_report
 
 # --- CORRECTED IMPORT ---
 from pydantic import BaseModel, Field, ConfigDict
@@ -17,6 +20,19 @@ MODEL_ALIAS = "production"
 model = None
 COLUMN_ORDER = None
 # ------------------------
+
+# --- CORRECTED LOGGING SETUP ---
+# Create a dedicated logger for prediction data
+prediction_logger = logging.getLogger("prediction_logger")
+# Prevent it from propagating to the root Uvicorn logger
+prediction_logger.propagate = False
+# Set the level
+prediction_logger.setLevel(logging.INFO)
+# Add a handler that writes directly to a file
+# This handler has NO formatter, so it writes the raw message.
+file_handler = logging.FileHandler("predictions.log", mode="a")
+prediction_logger.addHandler(file_handler)
+# -----------------------------
 
 
 # --- Lifespan Context Manager (replaces @app.on_event) ---
@@ -51,6 +67,18 @@ async def lifespan(app: FastAPI):
 
 
 # ------------------------------------
+
+
+# --- Setup a simple logger to save prediction data ---
+# This will create a 'predictions.log' file and append to it.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    filename="predictions.log",
+    filemode="a",
+)
+prediction_logger = logging.getLogger("prediction_logger")
+# ----------------------------------------------------
 
 
 # --- Pydantic Model with modern syntax ---
@@ -130,10 +158,46 @@ def predict_outcome(record: ClinicalRecord):
     prediction = model.predict(df_reordered)
     outcome = int(prediction[0])
 
+    # --- THIS IS THE NEW PART ---
+    # Log the incoming data (as a JSON string) for monitoring
+    prediction_logger.info(record.model_dump_json(by_alias=True))
+    # --------------------------
+
     return {
         "prediction": outcome,
         "interpretation": "Deceased" if outcome == 1 else "Survived",
     }
+
+
+# --- THIS IS THE NEW ENDPOINT ---
+@app.get("/monitor", response_class=HTMLResponse)
+def get_monitoring_report():
+    """
+    Generates and returns the data drift monitoring report.
+    """
+    report_file = "evidently_drift_report.html"
+    # The reference data is our training data, located relative to the project root
+    # Inside the Docker container, we assume a specific path for it.
+    # We will need to mount the processed data folder.
+    reference_data_path = "data/processed/X_train.pkl"
+    current_data_path = "predictions.log"
+
+    generate_drift_report(
+        reference_data_path=reference_data_path,
+        current_data_path=current_data_path,
+        report_path=report_file,
+    )
+
+    try:
+        with open(report_file, "r") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        return HTMLResponse(
+            content="<h1>No report generated.</h1><p>This may be because no prediction data has been logged yet.</p>"  # noq E501
+        )
+
+
+# -------------------------------
 
 
 @app.get("/")
