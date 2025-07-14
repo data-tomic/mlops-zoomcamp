@@ -1,0 +1,27 @@
+# .github/workflows/cd.yml
+name: Continuous Delivery - Train Model
+
+on:
+  push:
+    branches: [ main ] # Trigger on every push to the main branch
+
+jobs:
+  train-model:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          # Assuming requirements are in the project's root
+          pip install -r 07-project/requirements.txt
+      
+      - name: Run training pipeline via orchestrator
+        run: python 07-project/src/orchestrate.py
