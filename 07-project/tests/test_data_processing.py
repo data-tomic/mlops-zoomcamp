@@ -3,6 +3,7 @@ import os
 import pandas as pd
 from src.data_processing import run_data_processing
 
+
 def test_data_processing_smoke_test(tmpdir):
     """
     Smoke test: does the script run without errors and create output files?
