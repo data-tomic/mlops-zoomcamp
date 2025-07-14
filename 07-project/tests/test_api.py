@@ -85,4 +85,3 @@ def test_predict_invalid_payload():
     response = client.post("/predict", json=invalid_payload)
     # FastAPI should return a 422 Unprocessable Entity for validation errors
     assert response.status_code == 422
-
