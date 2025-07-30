@@ -1,11 +1,3 @@
-Of course. Creating a high-quality `README.md` is the final and most important step to make your project understandable, reproducible, and professional.
-
-Based on our entire journey, here is a comprehensive `README.md` file written in English. It covers the project's architecture, file structure, dataset, and provides a clear, step-by-step guide for anyone to set up and run your project.
-
-**Recommendation:** Copy the entire content below and replace the content of your `07-project/README.md` file with it.
-
----
-
 # End-to-End MLOps Pipeline for Neonatal Sepsis Prediction
 
 ![CI Badge](https://github.com/data-tomic/mlops-zoomcamp/actions/workflows/ci.yml/badge.svg)
